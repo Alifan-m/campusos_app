@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../shared/widgets/loading_skeleton.dart';
 import '../providers/cafeteria_provider.dart';
 import '../data/cafeteria_models.dart';
 
@@ -13,289 +12,171 @@ class CafeteriaScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesProvider);
     final menuAsync = ref.watch(menuItemsProvider);
-    final selectedCategory = ref.watch(selectedCategoryProvider);
-    final cart = ref.watch(cartProvider);
-    final cartCount = cart.fold(0, (sum, ci) => sum + ci.quantity);
-    final cartTotal = ref.read(cartProvider.notifier).total;
+    final cartItems = ref.watch(cartProvider);
+    final selectedCategoryId = ref.watch(selectedCategoryProvider);
+    final cartCount = cartItems.fold(0, (sum, ci) => sum + ci.quantity);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF7F4),
-      body: CustomScrollView(
-        slivers: [
-          // Hero app bar
-          SliverAppBar(
-            expandedHeight: 140,
-            pinned: true,
-            backgroundColor: const Color(0xFFFF6B35),
-            elevation: 0,
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: GestureDetector(
-                  onTap: cartCount > 0 ? () => context.push('/cart') : null,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.shopping_bag_outlined,
-                            color: Colors.white, size: 22),
-                      ),
-                      if (cartCount > 0)
-                        Positioned(
-                          top: 4,
-                          right: 4,
-                          child: Container(
-                            width: 16,
-                            height: 16,
-                            decoration: const BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$cartCount',
-                                style: const TextStyle(
-                                  color: Color(0xFFFF6B35),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFFFF6B35), Color(0xFFE8501E)],
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 80, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        const Text(
-                          '🍽️ Cafeteria',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Order food, pay with M-Pesa',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.navBar,
+        elevation: 0,
+        title: const Text(
+          'CampusOS',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search_rounded, color: Colors.white),
+            onPressed: () {},
           ),
-
-          // Category pills
-          SliverToBoxAdapter(
-            child: categoriesAsync.when(
-              loading: () => const SizedBox(height: 64),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (categories) => Container(
-                color: Colors.white,
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(96),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: 56,
-                      child: ListView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        children: [
-                          _Pill(
-                            label: 'All',
-                            isSelected: selectedCategory == null,
-                            onTap: () => ref
-                                .read(selectedCategoryProvider.notifier)
-                                .state = null,
-                          ),
-                          ...categories.map((c) => _Pill(
-                                label: c.name,
-                                isSelected: selectedCategory == c.id,
-                                onTap: () => ref
-                                    .read(selectedCategoryProvider.notifier)
-                                    .state = c.id,
-                              )),
-                        ],
-                      ),
+                    Text(
+                      "Today's Menu",
+                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
                     ),
-                    const Divider(height: 1, color: Color(0xFFF0EDE8)),
                   ],
                 ),
               ),
-            ),
-          ),
-
-          // Section header
-          const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(20, 20, 20, 4),
-              child: Text(
-                'On the Menu',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1C1C1E),
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ),
-          ),
-
-          // Menu items
-          menuAsync.when(
-            loading: () => SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (_, __) => const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: CardSkeleton(),
-                ),
-                childCount: 4,
-              ),
-            ),
-            error: (e, _) => SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
+              // Category filter chips
+              categoriesAsync.when(
+                loading: () => const SizedBox(height: 40),
+                error: (_, __) => const SizedBox(height: 40),
+                data: (categories) => SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.only(left: 16),
                     children: [
-                      const Text('🔌', style: TextStyle(fontSize: 48)),
-                      const SizedBox(height: 12),
-                      const Text('Could not load menu',
-                          style: TextStyle(
-                              color: Color(0xFF8E8E93), fontSize: 15)),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => ref.refresh(menuItemsProvider),
-                        child: const Text('Try again'),
+                      // "All" chip
+                      GestureDetector(
+                        onTap: () => ref.read(selectedCategoryProvider.notifier).state = null,
+                        child: _FilterChip(
+                          label: 'All',
+                          isSelected: selectedCategoryId == null,
+                        ),
                       ),
+                      ...categories.map((cat) => GestureDetector(
+                        onTap: () => ref.read(selectedCategoryProvider.notifier).state = cat.id,
+                        child: _FilterChip(
+                          label: cat.name,
+                          isSelected: selectedCategoryId == cat.id,
+                        ),
+                      )),
                     ],
                   ),
                 ),
               ),
-            ),
-            data: (items) => items.isEmpty
-                ? const SliverToBoxAdapter(
-                    child: Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Text('No items here yet',
-                            style: TextStyle(color: Color(0xFF8E8E93))),
-                      ),
-                    ),
-                  )
-                : SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => _MenuCard(item: items[i]),
-                        childCount: items.length,
-                      ),
-                    ),
-                  ),
+              const SizedBox(height: 12),
+            ],
           ),
-        ],
+        ),
       ),
+      body: menuAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.restaurant_outlined, size: 48, color: AppColors.outline),
+              const SizedBox(height: 12),
+              const Text('Could not load menu', style: TextStyle(color: AppColors.onSurfaceVariant)),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => ref.refresh(menuItemsProvider),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+        data: (items) {
+          final available = items.where((i) => i.isAvailable).toList();
 
-      // Floating cart button
-      bottomNavigationBar: cartCount > 0
-          ? SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: GestureDetector(
-                  onTap: () => context.push('/cart'),
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF6B35), Color(0xFFE8501E)],
+          if (available.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.no_food_rounded, size: 48, color: AppColors.outline),
+                  SizedBox(height: 12),
+                  Text('No items available', style: TextStyle(color: AppColors.onSurfaceVariant)),
+                ],
+              ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            itemCount: available.length,
+            itemBuilder: (_, i) {
+              final item = available[i];
+              final qty = ref.read(cartProvider.notifier).quantityOf(item.id);
+              return _FoodCard(
+                item: item,
+                quantity: qty,
+                onAdd: () => ref.read(cartProvider.notifier).addItem(item),
+                onRemove: () => ref.read(cartProvider.notifier).removeItem(item),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: cartCount > 0
+          ? GestureDetector(
+              onTap: () => context.push('/cart'),
+              child: Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: AppColors.secondary,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.secondary.withOpacity(0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.25),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF6B35).withOpacity(0.4),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
+                      child: Center(
+                        child: Text(
+                          '$cartCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
                         ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '$cartCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'View Cart',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            'KES ${cartTotal.toStringAsFixed(0)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_ios,
-                              color: Colors.white, size: 14),
-                        ],
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'View Order',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                  ],
                 ),
               ),
             )
@@ -304,48 +185,51 @@ class CafeteriaScreen extends ConsumerWidget {
   }
 }
 
-class _Pill extends StatelessWidget {
+class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
-  final VoidCallback onTap;
-
-  const _Pill(
-      {required this.label,
-      required this.isSelected,
-      required this.onTap});
+  const _FilterChip({required this.label, required this.isSelected});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFF6B35) : const Color(0xFFF5F0EB),
-          borderRadius: BorderRadius.circular(20),
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? AppColors.secondary : Colors.white.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? AppColors.secondary : Colors.white.withOpacity(0.25),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : const Color(0xFF6B6B6B),
-            fontWeight:
-                isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 13,
-          ),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : Colors.white.withOpacity(0.85),
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
         ),
       ),
     );
   }
 }
 
-class _MenuCard extends ConsumerWidget {
+class _FoodCard extends ConsumerWidget {
   final MenuItem item;
-  const _MenuCard({required this.item});
+  final int quantity;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+
+  const _FoodCard({
+    required this.item,
+    required this.quantity,
+    required this.onAdd,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch cart so quantity updates reactively
     final qty = ref.watch(cartProvider.notifier).quantityOf(item.id);
 
     return Container(
@@ -353,171 +237,148 @@ class _MenuCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            // Food image / icon
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF0E8),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: item.image != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Image.network(item.image!,
-                          fit: BoxFit.cover),
-                    )
-                  : const Center(
-                      child: Text('🍱',
-                          style: TextStyle(fontSize: 36)),
-                    ),
-            ),
-            const SizedBox(width: 14),
-            // Info
-            Expanded(
+      child: Row(
+        children: [
+          // Food image
+          ClipRRect(
+            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+            child: item.image != null && item.image!.isNotEmpty
+                ? Image.network(
+                    item.image!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _PlaceholderImage(),
+                  )
+                : _PlaceholderImage(),
+          ),
+
+          // Details
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     item.name,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w700,
                       fontSize: 15,
-                      color: Color(0xFF1C1C1E),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
                     ),
                   ),
-                  if (item.description != null &&
-                      item.description!.isNotEmpty) ...[
+                  if (item.description != null && item.description!.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(
                       item.description!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF8E8E93),
-                        height: 1.3,
-                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceVariant,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 10),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'KES ${item.price.toStringAsFixed(0)}',
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFFFF6B35),
+                          color: AppColors.onSurface,
                         ),
                       ),
-                      if (!item.isAvailable) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFEEEE),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text('Sold out',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Color(0xFFEF4444),
-                                  fontWeight: FontWeight.w600)),
-                        ),
-                      ],
+                      qty == 0
+                          ? GestureDetector(
+                              onTap: onAdd,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: AppColors.secondary,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Add to order',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : Row(
+                              children: [
+                                _QtyButton(icon: Icons.remove, onTap: onRemove),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text(
+                                    '$qty',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 15,
+                                      color: AppColors.onSurface,
+                                    ),
+                                  ),
+                                ),
+                                _QtyButton(icon: Icons.add, onTap: onAdd),
+                              ],
+                            ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            // Add / quantity control
-            if (item.isAvailable)
-              qty == 0
-                  ? GestureDetector(
-                      onTap: () =>
-                          ref.read(cartProvider.notifier).addItem(item),
-                      child: Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFF6B35),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFFF6B35)
-                                  .withOpacity(0.35),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(Icons.add,
-                            color: Colors.white, size: 22),
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () =>
-                              ref.read(cartProvider.notifier).addItem(item),
-                          child: Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFF6B35),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.add,
-                                color: Colors.white, size: 18),
-                          ),
-                        ),
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 4),
-                          child: Text(
-                            '$qty',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: Color(0xFF1C1C1E),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => ref
-                              .read(cartProvider.notifier)
-                              .removeItem(item),
-                          child: Container(
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF5F0EB),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.remove,
-                                size: 18,
-                                color: Color(0xFF6B6B6B)),
-                          ),
-                        ),
-                      ],
-                    ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlaceholderImage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 100,
+      height: 100,
+      color: AppColors.surfaceContainerHigh,
+      child: const Icon(Icons.restaurant_rounded, color: AppColors.outline, size: 32),
+    );
+  }
+}
+
+class _QtyButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _QtyButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: AppColors.secondary.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: Icon(icon, size: 16, color: AppColors.secondary),
       ),
     );
   }
