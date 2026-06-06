@@ -16,6 +16,7 @@ import 'features/events/screens/event_detail_screen.dart';
 import 'features/notices/screens/notices_screen.dart';
 import 'features/notices/screens/notice_detail_screen.dart';
 import 'features/map/screens/map_screen.dart';
+import 'features/profile/screens/profile_screen.dart';
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -51,6 +52,7 @@ final _router = GoRouter(
         GoRoute(path: '/events', builder: (_, __) => const EventsScreen()),
         GoRoute(path: '/notices', builder: (_, __) => const NoticesScreen()),
         GoRoute(path: '/map', builder: (_, __) => const MapScreen()),
+        GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
       ],
     ),
   ],

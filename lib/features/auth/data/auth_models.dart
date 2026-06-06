@@ -6,8 +6,9 @@ class UserModel {
   final String? course;
   final int? yearOfStudy;
   final String role;
+  final bool isVerified;
   final String? profilePicture;
-  final String dateJoined;
+  final String? dateJoined;
 
   UserModel({
     required this.id,
@@ -17,19 +18,21 @@ class UserModel {
     this.course,
     this.yearOfStudy,
     required this.role,
+    required this.isVerified,
     this.profilePicture,
-    required this.dateJoined,
+    this.dateJoined,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'].toString(),
-      phoneNumber: json['phone_number'],
-      fullName: json['full_name'],
+      phoneNumber: json['phone_number'] ?? '',
+      fullName: json['full_name'] ?? '',
       studentId: json['student_id'],
       course: json['course'],
       yearOfStudy: json['year_of_study'],
-      role: json['role'],
+      role: json['role'] ?? 'student',
+      isVerified: json['is_verified'] ?? false,
       profilePicture: json['profile_picture'],
       dateJoined: json['date_joined'],
     );
