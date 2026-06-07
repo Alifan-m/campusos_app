@@ -1,18 +1,8 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
-  static String get baseUrl {
-    if (kIsWeb) {
-      return 'http://localhost:8000/api';
-    } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8000/api';
-    } else {
-      return 'http://localhost:8000/api';
-    }
-  }
+  static const String baseUrl = 'https://campusos-backend-skl7.onrender.com/api'\;
 
   static Dio get instance {
     final dio = Dio(BaseOptions(
@@ -21,7 +11,6 @@ class ApiClient {
       receiveTimeout: const Duration(seconds: 30),
       headers: {'Content-Type': 'application/json'},
     ));
-
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         final token = await SecureStorage.getAccessToken();
@@ -57,7 +46,6 @@ class ApiClient {
         return handler.next(error);
       },
     ));
-
     return dio;
   }
 }
