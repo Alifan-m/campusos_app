@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'https://campusos-backend-skl7.onrender.com/api'\;
+  static const String baseUrl = 'https://campusos-backend-skl7.onrender.com/api';
 
   static Dio get instance {
     final dio = Dio(BaseOptions(
