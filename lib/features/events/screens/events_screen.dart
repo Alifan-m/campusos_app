@@ -32,11 +32,11 @@ class EventsScreen extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             backgroundColor: AppColors.navBar,
-            expandedHeight: 130,
+            expandedHeight: 160,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 color: AppColors.navBar,
-                padding: const EdgeInsets.fromLTRB(20, 56, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, 72, 20, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

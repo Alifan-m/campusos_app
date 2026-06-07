@@ -8,7 +8,6 @@ import '../data/notices_models.dart';
 class NoticesScreen extends ConsumerWidget {
   const NoticesScreen({super.key});
 
-  // These map to what backend stores
   static const _categories = ['All', 'General', 'Academic', 'Faculty', 'Urgent'];
 
   Color _categoryColor(String cat) {
@@ -43,33 +42,20 @@ class NoticesScreen extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             backgroundColor: AppColors.navBar,
-            expandedHeight: 130,
+            expandedHeight: 160,
+            automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 color: AppColors.navBar,
-                padding: const EdgeInsets.fromLTRB(20, 56, 20, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Notices &',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const Text(
-                      'Announcements',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(20, 72, 20, 0),
+                child: const Text(
+                  'Notices',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
                 ),
               ),
             ),
@@ -84,13 +70,10 @@ class NoticesScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(left: 16, bottom: 10),
                     children: _categories.map((cat) {
                       final isAll = cat == 'All';
-                      // For urgent, we filter by isUrgent flag — map to 'urgent' category string
                       final isSelected = isAll
                           ? selectedCat == null
                           : selectedCat?.toLowerCase() == cat.toLowerCase();
-
                       final accent = isAll ? Colors.white : _categoryColor(cat);
-
                       return GestureDetector(
                         onTap: () {
                           ref.read(selectedNoticeCategoryProvider.notifier).state =
@@ -148,7 +131,6 @@ class NoticesScreen extends ConsumerWidget {
             ),
           ),
           data: (notices) {
-            // If urgent category selected, also filter by isUrgent flag
             final filtered = selectedCat?.toLowerCase() == 'urgent'
                 ? notices.where((n) => n.isUrgent).toList()
                 : notices;
@@ -161,7 +143,7 @@ class NoticesScreen extends ConsumerWidget {
                     const Icon(Icons.notifications_none_rounded, size: 56, color: AppColors.outline),
                     const SizedBox(height: 16),
                     Text(
-                      selectedCat == null ? 'No notices yet' : 'No ${selectedCat} notices',
+                      selectedCat == null ? 'No notices yet' : 'No $selectedCat notices',
                       style: const TextStyle(color: AppColors.onSurfaceVariant, fontSize: 15),
                     ),
                   ],
@@ -169,7 +151,6 @@ class NoticesScreen extends ConsumerWidget {
               );
             }
 
-            // Sort: urgent first
             final sorted = [...filtered]
               ..sort((a, b) {
                 if (a.isUrgent && !b.isUrgent) return -1;
@@ -183,7 +164,9 @@ class NoticesScreen extends ConsumerWidget {
               itemBuilder: (_, i) => _NoticeCard(
                 notice: sorted[i],
                 categoryIcon: _categoryIcon(sorted[i].category),
-                categoryColor: sorted[i].isUrgent ? AppColors.error : _categoryColor(sorted[i].category),
+                categoryColor: sorted[i].isUrgent
+                    ? AppColors.error
+                    : _categoryColor(sorted[i].category),
                 onTap: () => context.push('/notices/${sorted[i].id}'),
               ),
             );
@@ -225,12 +208,14 @@ class _NoticeCard extends StatelessWidget {
           color: isUrgent ? const Color(0xFFFFF5F5) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isUrgent ? AppColors.error.withOpacity(0.3) : AppColors.outlineVariant,
+            color: isUrgent
+                ? AppColors.error.withOpacity(0.3)
+                : AppColors.outlineVariant,
             width: isUrgent ? 1.5 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: categoryColor.withOpacity(isUrgent ? 0.1 : 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -239,7 +224,6 @@ class _NoticeCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top row
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
               child: Row(
@@ -304,6 +288,7 @@ class _NoticeCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   notice.postedBy!,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontSize: 11,
@@ -314,18 +299,19 @@ class _NoticeCard extends StatelessWidget {
                               ),
                             Text(
                               _timeAgo(notice.createdDate),
-                              style: const TextStyle(fontSize: 11, color: AppColors.outline),
+                              style: const TextStyle(
+                                  fontSize: 11, color: AppColors.outline),
                             ),
                           ],
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: AppColors.outline, size: 18),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppColors.outline, size: 18),
                 ],
               ),
             ),
-            // Title + body
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: Column(
@@ -333,6 +319,8 @@ class _NoticeCard extends StatelessWidget {
                 children: [
                   Text(
                     notice.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
@@ -345,10 +333,11 @@ class _NoticeCard extends StatelessWidget {
                     notice.body,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 13,
-                      color: AppColors.onSurfaceVariant,
+                      color: AppColors.textSecondary,
                       height: 1.5,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
