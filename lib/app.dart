@@ -6,6 +6,7 @@ import 'shared/widgets/bottom_nav.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/register_screen.dart';
+import 'features/auth/screens/forgot_password_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/cafeteria/screens/cafeteria_screen.dart';
 import 'features/cafeteria/screens/cart_screen.dart';
@@ -24,6 +25,7 @@ final _router = GoRouter(
     GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
+    GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
     GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
     GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
     GoRoute(

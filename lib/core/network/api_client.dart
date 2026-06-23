@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
-  static const String baseUrl = 'https://campusos-backend-skl7.onrender.com/api';
+  // Pointed at the local Django server for testing.
+  // Switch this back to the Render URL before deploying / sharing builds:
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   static Dio get instance {
     final dio = Dio(BaseOptions(

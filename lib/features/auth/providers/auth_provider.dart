@@ -8,6 +8,7 @@ class AuthState {
   final bool isLoggedIn;
   final bool isPendingVerification;
   final String? error;
+  final String? debugResetCode;
 
   AuthState({
     this.user,
@@ -15,6 +16,7 @@ class AuthState {
     this.isLoggedIn = false,
     this.isPendingVerification = false,
     this.error,
+    this.debugResetCode,
   });
 
   AuthState copyWith({
@@ -23,6 +25,7 @@ class AuthState {
     bool? isLoggedIn,
     bool? isPendingVerification,
     String? error,
+    String? debugResetCode,
   }) {
     return AuthState(
       user: user ?? this.user,
@@ -30,6 +33,7 @@ class AuthState {
       isLoggedIn: isLoggedIn ?? this.isLoggedIn,
       isPendingVerification: isPendingVerification ?? this.isPendingVerification,
       error: error,
+      debugResetCode: debugResetCode,
     );
   }
 }
@@ -86,6 +90,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, error: result['error']);
       return false;
     }
+  }
+
+  Future<bool> forgotPassword({required String phoneNumber}) async {
+    state = state.copyWith(isLoading: true, error: null, debugResetCode: null);
+    final result = await _repository.forgotPassword(phoneNumber: phoneNumber);
+    state = state.copyWith(
+      isLoading: false,
+      error: result['success'] == true ? null : result['error'],
+      debugResetCode: result['success'] == true ? result['debugCode'] : null,
+    );
+    return result['success'] == true;
+  }
+
+  Future<bool> resetPassword({
+    required String phoneNumber,
+    required String code,
+    required String newPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final result = await _repository.resetPassword(
+      phoneNumber: phoneNumber,
+      code: code,
+      newPassword: newPassword,
+    );
+    state = state.copyWith(
+      isLoading: false,
+      error: result['success'] == true ? null : result['error'],
+    );
+    return result['success'] == true;
   }
 
   Future<void> checkAuthStatus() async {

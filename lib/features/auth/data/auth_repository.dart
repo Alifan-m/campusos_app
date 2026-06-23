@@ -68,4 +68,53 @@ class AuthRepository {
   Future<void> logout() async {
     await SecureStorage.clearAll();
   }
+
+  Future<Map<String, dynamic>> forgotPassword({
+    required String phoneNumber,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/forgot-password/', data: {
+        'phone_number': phoneNumber,
+      });
+      return {
+        'success': true,
+        'message': response.data['message'],
+        // Only present when the backend is running with DEBUG=True.
+        // In production this will be null since there's no real SMS
+        // provider wired up yet.
+        'debugCode': response.data['debug_code'],
+      };
+    } on DioException catch (e) {
+      final errors = e.response?.data;
+      String message = 'Could not send reset code.';
+      if (errors is Map) {
+        final first = errors.values.first;
+        message = first is List ? first.first.toString() : first.toString();
+      }
+      return {'success': false, 'error': message};
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String phoneNumber,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.post('/auth/reset-password/', data: {
+        'phone_number': phoneNumber,
+        'code': code,
+        'new_password': newPassword,
+      });
+      return {'success': true, 'message': response.data['message']};
+    } on DioException catch (e) {
+      final errors = e.response?.data;
+      String message = 'Could not reset password.';
+      if (errors is Map) {
+        final first = errors.values.first;
+        message = first is List ? first.first.toString() : first.toString();
+      }
+      return {'success': false, 'error': message};
+    }
+  }
 }
