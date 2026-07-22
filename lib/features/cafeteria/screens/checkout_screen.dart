@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/storage/secure_storage.dart';
 import '../providers/cafeteria_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -24,20 +24,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   int _secondsElapsed = 0;
 
   @override
-  void initState() {
-    super.initState();
-    _prefillPhone();
-  }
-
-  Future<void> _prefillPhone() async {
-    // optionally prefill from secure storage if you saved it
-  }
-
-  @override
   void dispose() {
     _pollingTimer?.cancel();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  String _extractApiError(DioException e) {
+    final data = e.response?.data;
+    if (data is Map) {
+      for (final entry in data.entries) {
+        final value = entry.value;
+        if (value is List && value.isNotEmpty) {
+          return value.first.toString();
+        }
+        if (value is String) {
+          return value;
+        }
+      }
+    }
+    if (data is String && data.isNotEmpty) return data;
+    return 'Something went wrong. Please check your order and try again.';
   }
 
   Future<void> _confirmAndPay() async {
@@ -54,11 +61,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final cart = ref.read(cartProvider);
 
     try {
-      // 1. Create order
       final order = await repo.createOrder(cart);
       _orderId = order.id;
 
-      // 2. Initiate STK push
       final mpesaData = await repo.initiateMpesa(
         orderId: order.id,
         phoneNumber: _phoneController.text.trim(),
@@ -71,7 +76,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _secondsElapsed = 0;
       });
 
-      // 3. Poll for status
       _pollingTimer =
           Timer.periodic(const Duration(seconds: 3), (_) async {
         _secondsElapsed += 3;
@@ -101,6 +105,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           }
         } catch (_) {}
       });
+    } on DioException catch (e) {
+      setState(() {
+        _isLoading = false;
+        _error = _extractApiError(e);
+      });
+      ref.invalidate(cartStockCheckProvider);
     } catch (e) {
       setState(() {
         _isLoading = false;
@@ -127,7 +137,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Order summary
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -175,7 +184,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             const SizedBox(height: 20),
 
             if (!_waitingForMpesa) ...[
-              // Phone input
               const Text('M-Pesa Phone Number',
                   style: TextStyle(
                       fontWeight: FontWeight.w600,
@@ -199,9 +207,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     color: AppColors.error.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(_error!,
-                      style:
-                          const TextStyle(color: AppColors.error)),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.error_outline_rounded,
+                          size: 18, color: AppColors.error),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(_error!,
+                            style:
+                                const TextStyle(color: AppColors.error)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: const Text('Back to Cart to adjust quantities'),
                 ),
               ],
               const SizedBox(height: 24),
@@ -225,7 +248,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
               ),
             ] else ...[
-              // Waiting for M-Pesa
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(

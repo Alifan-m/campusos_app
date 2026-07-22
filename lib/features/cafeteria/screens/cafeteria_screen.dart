@@ -238,6 +238,8 @@ class _FoodCard extends ConsumerWidget {
     required this.onRemove,
   });
 
+  static const int _lowStockThreshold = 10;
+
   IconData _categoryIcon(int catId) {
     switch (catId) {
       case 1: return Icons.free_breakfast_rounded;
@@ -261,6 +263,10 @@ class _FoodCard extends ConsumerWidget {
     final qty = ref.watch(cartProvider.notifier).quantityOf(item.id);
     final catColor = _categoryColor(item.categoryId);
 
+    final hasFiniteStock = item.effectiveStock < 999;
+    final isSoldOut = hasFiniteStock && item.effectiveStock <= 0;
+    final isLowStock = hasFiniteStock && !isSoldOut && item.effectiveStock <= _lowStockThreshold;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -275,125 +281,218 @@ class _FoodCard extends ConsumerWidget {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Left: image or category badge
-          ClipRRect(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(18)),
-            child: item.image != null && item.image!.isNotEmpty
-                ? Image.network(
-                    item.image!,
-                    width: 100,
-                    height: 110,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _CategoryBadge(
-                      icon: _categoryIcon(item.categoryId),
-                      color: catColor,
-                    ),
-                  )
-                : _CategoryBadge(
-                    icon: _categoryIcon(item.categoryId),
-                    color: catColor,
-                  ),
-          ),
-
-          // Right: details
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onSurface,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  if (item.description != null && item.description!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      item.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'KES ${item.price.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.onSurface,
+      child: Opacity(
+        opacity: isSoldOut ? 0.55 : 1.0,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(18)),
+                  child: item.image != null && item.image!.isNotEmpty
+                      ? Image.network(
+                          item.image!,
+                          width: 100,
+                          height: 110,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _CategoryBadge(
+                            icon: _categoryIcon(item.categoryId),
+                            color: catColor,
+                          ),
+                        )
+                      : _CategoryBadge(
+                          icon: _categoryIcon(item.categoryId),
+                          color: catColor,
+                        ),
+                ),
+                if (isSoldOut)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.45),
+                      child: const Center(
+                        child: Text(
+                          'SOLD\nOUT',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
-                      qty == 0
-                          ? GestureDetector(
-                              onTap: onAdd,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.secondary,
-                                  borderRadius: BorderRadius.circular(22),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.secondary.withOpacity(0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
+                    ),
+                  ),
+              ],
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onSurface,
+                              letterSpacing: -0.2,
+                            ),
+                          ),
+                        ),
+                        if (isLowStock)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3E0),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                            ),
+                            child: Text(
+                              '${item.effectiveStock} left',
+                              style: const TextStyle(
+                                color: Color(0xFFB45309),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          )
+                        else if (isSoldOut)
+                          Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.errorContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Out of Stock',
+                              style: TextStyle(
+                                color: AppColors.error,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (item.description != null && item.description!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        item.description!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'KES ${item.price.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.onSurface,
+                          ),
+                        ),
+                        if (isSoldOut)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.outline.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            child: const Text(
+                              'Unavailable',
+                              style: TextStyle(
+                                color: AppColors.onSurfaceVariant,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          )
+                        else
+                          qty == 0
+                              ? GestureDetector(
+                                  onTap: onAdd,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.secondary,
+                                      borderRadius: BorderRadius.circular(22),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.secondary.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      'Add to order',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Row(
+                                  children: [
+                                    _QtyBtn(icon: Icons.remove, onTap: onRemove),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      child: Text(
+                                        '$qty',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 16,
+                                          color: AppColors.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    _QtyBtn(
+                                      icon: Icons.add,
+                                      onTap: (hasFiniteStock && qty >= item.effectiveStock)
+                                          ? () {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      'Only ${item.effectiveStock} portion(s) of ${item.name} left'),
+                                                  behavior: SnackBarBehavior.floating,
+                                                ),
+                                              );
+                                            }
+                                          : onAdd,
                                     ),
                                   ],
                                 ),
-                                child: const Text(
-                                  'Add to order',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : Row(
-                              children: [
-                                _QtyBtn(icon: Icons.remove, onTap: onRemove),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                                  child: Text(
-                                    '$qty',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 16,
-                                      color: AppColors.onSurface,
-                                    ),
-                                  ),
-                                ),
-                                _QtyBtn(icon: Icons.add, onTap: onAdd),
-                              ],
-                            ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

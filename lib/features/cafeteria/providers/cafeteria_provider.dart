@@ -63,3 +63,11 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
 
 final cartProvider =
     StateNotifierProvider<CartNotifier, List<CartItem>>((ref) => CartNotifier());
+
+final orderHistoryProvider = FutureProvider<List<Order>>((ref) async {
+  return ref.read(cafeteriaRepositoryProvider).getOrderHistory();
+});
+
+final cartStockCheckProvider = FutureProvider<List<MenuItem>>((ref) async {
+  return ref.read(cafeteriaRepositoryProvider).getMenuItems();
+});

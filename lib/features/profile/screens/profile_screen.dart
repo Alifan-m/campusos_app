@@ -134,7 +134,7 @@ class ProfileScreen extends ConsumerWidget {
                       icon: Icons.receipt_long_rounded,
                       label: 'My Orders',
                       color: AppColors.secondary,
-                      onTap: () => _showOrdersSheet(context, ref),
+                      onTap: () => context.push('/orders'),
                     ),
                     _MenuItem(
                       icon: Icons.event_rounded,

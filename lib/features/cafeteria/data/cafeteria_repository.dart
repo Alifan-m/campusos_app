@@ -33,6 +33,11 @@ class CafeteriaRepository {
     return Order.fromJson(response.data);
   }
 
+  Future<List<Order>> getOrderHistory() async {
+    final response = await _dio.get('/cafeteria/orders/history/');
+    return (response.data as List).map((e) => Order.fromJson(e)).toList();
+  }
+
   Future<Map<String, dynamic>> initiateMpesa({
     required int orderId,
     required String phoneNumber,

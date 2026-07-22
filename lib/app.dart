@@ -18,6 +18,7 @@ import 'features/notices/screens/notices_screen.dart';
 import 'features/notices/screens/notice_detail_screen.dart';
 import 'features/map/screens/map_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
+import 'features/cafeteria/screens/order_history_screen.dart';
 
 final _router = GoRouter(
   initialLocation: '/',
@@ -28,6 +29,7 @@ final _router = GoRouter(
     GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
     GoRoute(path: '/cart', builder: (_, __) => const CartScreen()),
     GoRoute(path: '/checkout', builder: (_, __) => const CheckoutScreen()),
+    GoRoute(path: '/orders', builder: (_, __) => const OrderHistoryScreen()),
     GoRoute(
       path: '/order-status/:id',
       builder: (_, state) => OrderStatusScreen(
